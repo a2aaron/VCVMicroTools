@@ -1,6 +1,6 @@
 # kissfft
 
-Copyright (c) 2018 Aaron Kofsky
+Copyright (c) 2003-2010 Mark Borgerding
 
 All rights reserved.
 
