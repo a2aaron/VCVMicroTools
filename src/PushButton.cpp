@@ -10,14 +10,14 @@
 struct PushButton : Module {
     enum ParamIds {
         LIGHT_PARAM = 0,
-        KNOB_PARAM = NUM_CHANNELS,
-        NUM_PARAMS = LIGHT_PARAM + KNOB_PARAM,
+        KNOB_PARAM = LIGHT_PARAM + NUM_CHANNELS,
+        NUM_PARAMS = NUM_CHANNELS * 2,
     };
     enum OutputIds {
         NUM_OUTPUTS = NUM_CHANNELS
     };
     enum LightIds {
-        NUM_LIGHTS = NUM_CHANNELS * 2
+        NUM_LIGHTS = NUM_CHANNELS
     };
 
     bool state[NUM_CHANNELS]; // tracks state of mute buttons
@@ -28,7 +28,6 @@ struct PushButton : Module {
 };
 
 void PushButton::step() {
-    // printf("%s\n", LIGHT_PARAM);
     for (int i = 0; i < NUM_CHANNELS; i++) {
         float out = 0.0f;
         state[i] = params[i + LIGHT_PARAM].value > 0 ? true : false;
