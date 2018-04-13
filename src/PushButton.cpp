@@ -52,7 +52,7 @@ struct PushButtonWidget : ModuleWidget {
 };
 
 PushButtonWidget::PushButtonWidget(PushButton *module) : ModuleWidget(module) {
-    setPanel(SVG::load(assetPlugin(plugin, "res/8vert.svg")));
+    setPanel(SVG::load(assetPlugin(plugin, "res/PushButton.svg")));
 
     addChild(Widget::create<ScrewSilver>(Vec(15, 0)));
     addChild(Widget::create<ScrewSilver>(Vec(box.size.x - 30, 0)));
