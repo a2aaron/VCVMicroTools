@@ -9,4 +9,5 @@ void init(rack::Plugin *p) {
 	p->version = TOSTRING(VERSION);
 	
 	p->addModel(modelPushButton);
+    p->addModel(modelRecorder);
 }
