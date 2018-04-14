@@ -40,7 +40,7 @@ const char* toString(SampleFmt format) {
     }
 }
 
-void writewav(float *data, SampleFmt format, int num_channels, int samples, int sample_rate, const char* filename) {
+void writewav(uint8_t *data, SampleFmt format, int num_channels, int samples, int sample_rate, const char* filename) {
   FILE* f = fopen(filename, "w");
 
   int sample_bytes, wav_format;

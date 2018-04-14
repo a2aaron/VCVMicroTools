@@ -5,6 +5,42 @@
 #include <vector>
 #include <iostream>
 
+std::vector<uint8_t> to_bytes(SampleFmt format, std::vector<float> buffer) {
+    std::vector<uint8_t> byte_buffer;
+    for (int i = 0; i < buffer.size(); i++) {
+        // Vector storing the sample unpacked into some number of bytes.
+        std::vector<uint8_t> bytes;
+
+        // Note: Audio output from Eurorack devices is +-12V
+        if (format == SampleFmt::PCM_U8) {
+            // Range will be from 0 to 255
+            uint8_t sample = 127 * ((buffer[i] / 24) + 1);
+            bytes.push_back(sample);
+        } else if (format == SampleFmt::PCM_S16) {
+            // Range will be from -32766 to 32767
+            int16_t sample = 32767 * (buffer[i] / 12);
+            // Pretend the 16bit integer is actually just two 8 bit bytes
+            uint8_t const* casted = reinterpret_cast<uint8_t const *>(&sample);
+            bytes.push_back(casted[0]);
+            bytes.push_back(casted[1]);
+        } else if (format == SampleFmt::FLOAT_32) {
+            // Wav files are expecting floats between -1 and 1.
+            float sample = buffer[i] / 12;
+            // Pretend the 32bit float is actually just four 8 bit bytes
+            uint8_t const* casted = reinterpret_cast<uint8_t const *>(&sample);
+            bytes.push_back(casted[0]);
+            bytes.push_back(casted[1]);
+            bytes.push_back(casted[2]);
+            bytes.push_back(casted[3]);
+        } else {
+            assert(not "Unknown format");
+        }
+        // Append the bytes vector to byte_buffer
+        byte_buffer.insert(byte_buffer.end(), bytes.begin(), bytes.end());
+    }
+    return byte_buffer;
+}
+
 // Returns true if the filename exists
 bool file_exists(const std::string& name) {
     if (FILE *file = fopen(name.c_str(), "r")) {
@@ -76,20 +112,19 @@ void Recorder::step() {
             filename = "recording" + std::to_string(i) + ".wav";
         }
         while (file_exists(filename));
-
-        writewav(&buffer[0], format, num_channels, num_samples, engineGetSampleRate(), filename.c_str());
+        std::vector<uint8_t> byte_buffer = to_bytes(format, buffer);
+        writewav(&byte_buffer[0], format, num_channels, num_samples, engineGetSampleRate(), filename.c_str());
         printf("Wrote %s\n", filename.c_str());
     }
 
     if (recording) {
-        // Audio output from Eurorack devices is +-12V, but wav files are expecting
-        // floats between -1 and 1, so we must divide to be within that range.
+        // Note: While this buffer always has floats, the actual conversion is done at write time
         if (num_channels == 1) {
-            buffer.push_back(inputs[Recorder::LEFT_INPUT].value / 12);
+            buffer.push_back(inputs[Recorder::LEFT_INPUT].value);
         } else {
             // When stereo, the samples are interleaved.
-            buffer.push_back(inputs[Recorder::LEFT_INPUT].value / 12);
-            buffer.push_back(inputs[Recorder::RIGHT_INPUT].value / 12);
+            buffer.push_back(inputs[Recorder::LEFT_INPUT].value);
+            buffer.push_back(inputs[Recorder::RIGHT_INPUT].value);
         }
         num_samples += 1;
     }
