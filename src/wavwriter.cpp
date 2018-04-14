@@ -46,7 +46,7 @@ void writewav(float *data, SampleFmt format, int num_channels, int samples, int 
   default:
       assert(not "an expected format");
   }
-  int total_bytes = sample_bytes * samples;
+  int total_bytes = num_channels * sample_bytes * samples;
   int block_align = num_channels * sample_bytes;
 
   /* header*/
