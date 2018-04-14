@@ -29,6 +29,17 @@ void write(FILE* f, int size, int32_t arg)
   }
 }
 
+const char* toString(SampleFmt format) {
+    switch(format) {
+        case SampleFmt::PCM_U8:
+            return "8 bit unsigned";
+        case SampleFmt::PCM_S16:
+            return "16 bit signed";
+        case SampleFmt::FLOAT_32:
+            return "32 bit float";
+    }
+}
+
 void writewav(float *data, SampleFmt format, int num_channels, int samples, int sample_rate, const char* filename) {
   FILE* f = fopen(filename, "w");
 

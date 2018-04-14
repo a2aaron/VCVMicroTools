@@ -11,6 +11,8 @@ enum SampleFmt {
     FLOAT_32,
 };
 
+const char* toString(SampleFmt format);
+
 void writewav(float *data, SampleFmt format, int num_channels, int samples, int sample_rate, const char* filename);
 
 #endif

@@ -41,7 +41,7 @@ struct Recorder : Module {
     size_t num_samples = 0;
     std::vector<float> buffer; // keeps track of the currently written samples
     bool recording = false;
-
+    SampleFmt format = SampleFmt::FLOAT_32;
     int num_channels = 1;
 
     Recorder() : Module(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {}
@@ -62,7 +62,7 @@ void Recorder::step() {
 
     // Went from not recording state to recording state
     if (not recording and button_on) {
-        printf("Recording %d channels %f\n", num_channels, engineGetSampleRate());
+        printf("Recording %d channels %f, %s\n", num_channels, engineGetSampleRate(), toString(format));
         buffer.clear();
         num_samples = 0;
     }
@@ -77,7 +77,7 @@ void Recorder::step() {
         }
         while (file_exists(filename));
 
-        writewav(&buffer[0], SampleFmt::FLOAT_32, num_channels, num_samples, engineGetSampleRate(), filename.c_str());
+        writewav(&buffer[0], format, num_channels, num_samples, engineGetSampleRate(), filename.c_str());
         printf("Wrote %s\n", filename.c_str());
     }
 
@@ -137,9 +137,68 @@ struct RecordingTimer : LedDisplay {
     }
 };
 
+struct FormatItem : MenuItem {
+    SampleFmt format;
+    Recorder *recorder;
+    FormatItem(SampleFmt format, Recorder *recorder) {
+        this->format = format;
+        this->text = toString(format);
+        this->recorder = recorder;
+        this->rightText = CHECKMARK(format == recorder->format);
+    }
+
+    // on click, set the Recorder to use the selected format.
+    void onAction(EventAction &e) override {
+        recorder->format = this->format;
+    }
+};
+
+
+struct FormatSelector : LedDisplay {
+    LedDisplayChoice *text = nullptr;
+    Recorder *recorder;
+    FormatSelector() {
+        box.size = Vec(35, 22);
+        text = Widget::create<LedDisplayChoice>(Vec(0, 0));
+        text->textOffset = Vec(3, 14);
+        text->box.size = Vec(35, 25);
+        addChild(text);
+    }
+
+    void setDisplay(SampleFmt format) {
+        switch(format) {
+            case SampleFmt::PCM_U8:
+                text->text = "8 USI";
+                break;
+            case SampleFmt::PCM_S16:
+                text->text = "16 SI";
+                break;
+            case SampleFmt::FLOAT_32:
+                text->text = "32 FL";
+                break;
+            default:
+                text->text = "ERROR";
+                break;
+        }
+    }
+
+    void onMouseDown(EventMouseDown &e) override {
+        Menu *menu = gScene->createMenu();
+        menu->addChild(construct<MenuLabel>(&MenuLabel::text, "Format"));
+        if (recorder->recording) {
+            menu->addChild(MenuItem::create("Can't change formats while recording!"));
+        } else {
+            menu->addChild(new FormatItem(SampleFmt::PCM_U8, recorder));
+            menu->addChild(new FormatItem(SampleFmt::PCM_S16, recorder));
+            menu->addChild(new FormatItem(SampleFmt::FLOAT_32, recorder));
+        }
+    }
+};
+
 struct RecorderWidget : ModuleWidget {
     Recorder *recorder;
     RecordingTimer *recordingTimer;
+    FormatSelector *formatSelector;
     RecorderWidget(Recorder *module);
     void step() override;
 };
@@ -159,6 +218,10 @@ RecorderWidget::RecorderWidget(Recorder *module) : ModuleWidget(module) {
     recordingTimer = Widget::create<RecordingTimer>(Vec(5, 140));
     addChild(recordingTimer);
 
+    formatSelector = Widget::create<FormatSelector>(Vec(5, 300));
+    formatSelector->recorder = module;
+    addChild(formatSelector);
+
     addParam(ParamWidget::create<RecordButton>(Vec(7.5, 170), module, Recorder::RECORD_BUTTON, 0.0f, 1.0f, 0.0f));
     addParam(ParamWidget::create<CKSS>(Vec(15, 260), module, Recorder::MONO_STEREO, 0.0f, 1.0f, 0.0f));
 }
@@ -166,6 +229,7 @@ RecorderWidget::RecorderWidget(Recorder *module) : ModuleWidget(module) {
 void RecorderWidget::step() {
     recordingTimer->recording = recorder->recording;
     recordingTimer->setSeconds(recorder->getSeconds());
+    formatSelector->setDisplay(recorder->format);
 }
 
 Model *modelRecorder = Model::create<Recorder, RecorderWidget>("MicroTools", "Recorder", "Recorder", UTILITY_TAG);
