@@ -35,7 +35,7 @@ struct Recorder : Module {
         NUM_INPUTS = 2,
     };
 
-    std::vector<uint8_t> buffer; // keeps track of the currently written samples
+    std::vector<float> buffer; // keeps track of the currently written samples
     bool recording = false;
 
     Recorder() : Module(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {}
@@ -47,7 +47,7 @@ void Recorder::step() {
     // Went from not recording state to recording state
     if (!recording && button_on) {
         lights[0].setBrightness(1.0f);
-        buffer = std::vector<uint8_t>();
+        buffer = std::vector<float>();
     }
 
     if (recording && !button_on) {
@@ -66,9 +66,9 @@ void Recorder::step() {
     }
 
     if (recording) {
-        float input = (inputs[0].value + 12) * 255 / 24;
-        // Typical values are from -12.0f to 12.0f, so to convert to range 
-        buffer.push_back((uint8_t) input);
+        // Audio output from Eurorack devices is +-12V, but wav files are expecting
+        // floats between -1 and 1, so we must divide to be within that range.
+        buffer.push_back(inputs[0].value / 12);
     }
 
     recording = button_on;
