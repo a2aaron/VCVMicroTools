@@ -4,6 +4,17 @@
 
 #include <vector>
 #include <iostream>
+
+// Returns true if the filename exists
+bool file_exists(const std::string& name) {
+    if (FILE *file = fopen(name.c_str(), "r")) {
+        fclose(file);
+        return true;
+    } else {
+        return false;
+    }   
+}
+
 struct Recorder : Module {
     // The record button
     enum ParamIds {
@@ -29,29 +40,29 @@ struct Recorder : Module {
 
     Recorder() : Module(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {}
     void step() override;
-    void onStart() {
-        buffer = std::vector<uint8_t>();
-        lights[0].setBrightness(0.9f);
-        printf("START!!\n");
-        // TODO: do some set up with a file??
-    }
-
-    void onEnd() {
-        lights[0].setBrightness(0.0f);
-        writewav(&buffer[0], buffer.size(), engineGetSampleRate(), "hewwo.wav");
-        printf("END! %lu\n", buffer.size());
-    }
 };
 
 void Recorder::step() {
     bool button_on = params[0].value > 0 ? true : false;
     // Went from not recording state to recording state
     if (!recording && button_on) {
-        onStart();
+        lights[0].setBrightness(1.0f);
+        buffer = std::vector<uint8_t>();
     }
 
     if (recording && !button_on) {
-        onEnd();
+        lights[0].setBrightness(0.0f);
+        int i = 0;
+        std::string filename = "recording0.wav";
+
+        do {
+            i++;
+            filename = "recording" + std::to_string(i) + ".wav";
+        }
+        while (file_exists(filename));
+        
+
+        writewav(&buffer[0], buffer.size(), engineGetSampleRate(), filename.c_str());
     }
 
     if (recording) {
