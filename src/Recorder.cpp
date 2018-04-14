@@ -48,18 +48,18 @@ void Recorder::step() {
     bool button_on = params[0].value > 0 ? true : false;
     bool is_stereo = params[1].value > 0 ? true : false;
 
-    if (!recording) {
+    if (not recording) {
         num_channels = is_stereo ? 2 : 1;
         printf("Num Channels: %d\n", num_channels);
     }
 
     // Went from not recording state to recording state
-    if (!recording && button_on) {
+    if (not recording and button_on) {
         lights[0].setBrightness(1.0f);
         buffer.clear();
     }
 
-    if (recording && !button_on) {
+    if (recording and not button_on) {
         lights[0].setBrightness(0.0f);
         int i = 0;
         std::string filename = "recording0.wav";
