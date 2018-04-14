@@ -41,6 +41,8 @@ void writewav(float *data, Format format, int num_channels, int samples, int sam
   } else if (format == FLOAT_32) {
     bits_per_sample = 32;
     total_bytes = 4 * samples;
+  } else {
+    assert(not "Unknown format")
   }
 
   fputs("RIFF", f);                              /* main chunk       */
