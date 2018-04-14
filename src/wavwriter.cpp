@@ -28,7 +28,7 @@ void write(FILE* f, int size, int32_t arg)
   }
 }
 
-void writewav(float *data, int samples, int sample_rate, const char* filename) {
+void writewav(float *data, int num_channels, int samples, int sample_rate, const char* filename) {
   FILE* f = fopen(filename, "w");
   // We multiply the number of samples by 4 each float takes up 4 bytes, so 
   // we will need to write out 4 * number of samples.
@@ -39,7 +39,7 @@ void writewav(float *data, int samples, int sample_rate, const char* filename) {
   fputs("fmt ", f);                              /* format chunk     */
   write(f, 4, 16);                               /* size of subchunk */
   write(f, 2, 3);                                /* format (1 = PCM, 3 = IEEE float) */
-  write(f, 2, 1);                                /* # of channels    */
+  write(f, 2, num_channels);                     /* # of channels    */
   write(f, 4, sample_rate);                      /* sample rate      */
   write(f, 4, sample_rate);                      /* byte rate        */
   write(f, 2, 1);                                /* block align      */
