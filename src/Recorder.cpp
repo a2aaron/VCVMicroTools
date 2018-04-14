@@ -50,7 +50,6 @@ void Recorder::step() {
 
     if (not recording) {
         num_channels = is_stereo ? 2 : 1;
-        printf("Num Channels: %d\n", num_channels);
     }
 
     // Went from not recording state to recording state
