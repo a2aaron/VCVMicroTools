@@ -75,7 +75,7 @@ void Recorder::step() {
         }
         while (file_exists(filename));
 
-        writewav(&buffer[0], num_channels, buffer.size(), engineGetSampleRate(), filename.c_str());
+        writewav(&buffer[0], Format::FLOAT_32, num_channels, buffer.size(), engineGetSampleRate(), filename.c_str());
         printf("Wrote %s\n", filename.c_str());
     }
 

@@ -28,13 +28,23 @@ void write(FILE* f, int size, int32_t arg)
   }
 }
 
-void writewav(float *data, int num_channels, int samples, int sample_rate, const char* filename) {
+void writewav(float *data, Format format, int num_channels, int samples, int sample_rate, const char* filename) {
   FILE* f = fopen(filename, "w");
   // We multiply the number of samples by 4 each float takes up 4 bytes, so 
   // we will need to write out 4 * number of samples.
   /* header*/
+  int bits_per_sample;
+  int total_bytes;
+  if (format == PCM_U8) {
+    bits_per_sample = 8;
+    total_bytes = samples;
+  } else if (format == FLOAT_32) {
+    bits_per_sample = 32;
+    total_bytes = 4 * samples;
+  }
+
   fputs("RIFF", f);                              /* main chunk       */
-  write(f, 4, SIZE_OF_HEADER + samples * 4);     /* chunk size       */
+  write(f, 4, SIZE_OF_HEADER + total_bytes);     /* chunk size       */
   fputs("WAVE", f);                              /* file format      */
   fputs("fmt ", f);                              /* format chunk     */
   write(f, 4, 16);                               /* size of subchunk */
@@ -46,7 +56,7 @@ void writewav(float *data, int num_channels, int samples, int sample_rate, const
   write(f, 2, 32);                               /* bits per sample (8 for 8bit PCM, 32 for floats) */
   fputs("data", f);                              /* data chunk       */
   /* body */
-  fwrite(data, 1, samples * 4, f);               /* actual audio     */
+  fwrite(data, 1, total_bytes, f);               /* actual audio     */
 
   fclose(f);
 }
