@@ -47,7 +47,7 @@ void Recorder::step() {
     // Went from not recording state to recording state
     if (!recording && button_on) {
         lights[0].setBrightness(1.0f);
-        buffer = std::vector<float>();
+        buffer.clear();
     }
 
     if (recording && !button_on) {
