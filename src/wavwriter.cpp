@@ -48,7 +48,7 @@ void writewav(float *data, Format format, int num_channels, int samples, int sam
   fputs("WAVE", f);                              /* file format      */
   fputs("fmt ", f);                              /* format chunk     */
   write(f, 4, 16);                               /* size of subchunk */
-  write(f, 2, 3);                                /* format (1 = PCM, 3 = IEEE float) */
+  write(f, 2, format);                           /* format (1 = PCM, 3 = IEEE float) */
   write(f, 2, num_channels);                     /* # of channels    */
   write(f, 4, sample_rate);                      /* sample rate      */
   write(f, 4, sample_rate);                      /* byte rate        */

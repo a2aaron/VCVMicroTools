@@ -5,8 +5,8 @@
 
 #include <stdint.h>
 enum Format {
-  PCM_U8,
-  FLOAT_32,
+  PCM_U8 = 1,
+  FLOAT_32 = 3,
 };
 
 void writewav(float *data, Format format, int num_channels, int samples, int sample_rate, const char* filename);
