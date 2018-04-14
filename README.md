@@ -1,18 +1,17 @@
-# Fundamental
+# MicroTools
 
-The Fundamental plugin pack gives you a basic foundation to create simple synthesizers, route and analyze signals, complement other more complicated modules, and build some not-so-simple patches using brute force (lots of modules).
-They are also a great reference for creating your own plugins in C++.
+This plugin is designed to provide a set of useful utility tools for VCV Rack.
+
+### Push Button
+A button that you can push! Sends bipolar control voltages (-5V to +5V, +1V by default) based on the control knobs. Use this to trigger gates or send temporary signals without the need for a clock or LFO!
+
+### Recorder
+Hook any input signal to this module and click the switch to start recording! Click again to stop. This module outputs wav files.
 
 ## Building
 
-Follow the build instructions for [VCV Rack](https://github.com/VCVRack/Rack).
-The `master` branch of this repo builds against the `master` branch of Rack.
-To build for a previous version, use `git tag` to find a compatible version and `git checkout [TAG]` to check out the source for that version.
+Follow the build instructions for [VCV Rack](https://github.com/VCVRack/Rack). This plugin compiles like any other typical VCV plugin (cd to the plugin directory and run `make`)
 
 ## License
 
-Source code licensed under [BSD-3-Clause](LICENSE.txt) by [Andrew Belt](https://andrewbelt.name/)
-
-VCV logo is © 2017. Derivative works may not use the VCV logo.
-
-Panel graphics in `res/` are © 2017 by [Grayscale](http://grayscale.info/). You may not create derivative works of Fundamental panels.
+Source code licensed under [BSD-3-Clause](LICENSE.txt).

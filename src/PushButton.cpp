@@ -61,11 +61,15 @@ PushButtonWidget::PushButtonWidget(PushButton *module) : ModuleWidget(module) {
 
     for (int i = 0; i < NUM_CHANNELS; i++) {
         // Handles on click stuff
-        float y_dist = 38.445;
-        addParam(ParamWidget::create<RoundBlackKnob>(Vec(9.507, 50.397 + y_dist * i), module, PushButton::KNOB_PARAM + i, MIN_VOLTAGE, MAX_VOLTAGE, DEFAULT_VOLTAGE));
-        addParam(ParamWidget::create<LEDBezel>(Vec(50, 53 + y_dist * i), module, PushButton::LIGHT_PARAM + i, 0.0f, 1.0f, 0.0f));
-        addChild(ModuleLightWidget::create<TriggerLight<GreenLight>>(Vec(52, 55 + y_dist * i), module, i));
-        addOutput(Port::create<PJ301MPort>(Vec(86.393, 50.414 + y_dist * i), Port::OUTPUT, module, i));
+        const float Y_DIST = 38.5;
+        const float KNOB_HEIGHT = 14.5;
+        const float BEZEL_HEIGHT = 11;
+        const float LIGHT_HEIGHT = 9;
+        const float PORT_HEIGHT = 12.5;
+        addParam(ParamWidget::create<RoundBlackKnob>(Vec(9.507, 64 - KNOB_HEIGHT + Y_DIST * i), module, PushButton::KNOB_PARAM + i, MIN_VOLTAGE, MAX_VOLTAGE, DEFAULT_VOLTAGE));
+        addParam(ParamWidget::create<LEDBezel>(Vec(50, 64 - BEZEL_HEIGHT + Y_DIST * i), module, PushButton::LIGHT_PARAM + i, 0.0f, 1.0f, 0.0f));
+        addChild(ModuleLightWidget::create<TriggerLight<GreenLight>>(Vec(52, 64 - LIGHT_HEIGHT + Y_DIST * i), module, i));
+        addOutput(Port::create<PJ301MPort>(Vec(84, 64 - PORT_HEIGHT + Y_DIST * i), Port::OUTPUT, module, i));
     }
 }
 
