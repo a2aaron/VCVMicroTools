@@ -38,6 +38,7 @@ struct Recorder : Module {
         NUM_INPUTS = 2,
     };
 
+    size_t num_samples = 0;
     std::vector<float> buffer; // keeps track of the currently written samples
     bool recording = false;
 
@@ -47,7 +48,7 @@ struct Recorder : Module {
     void step() override;
 
     float getSeconds() {
-        return float(buffer.size()) / engineGetSampleRate();
+        return num_samples / engineGetSampleRate();
     }
 };
 
@@ -61,8 +62,9 @@ void Recorder::step() {
 
     // Went from not recording state to recording state
     if (not recording and button_on) {
-        printf("Recording %d channels\n", num_channels);
+        printf("Recording %d channels %f\n", num_channels, engineGetSampleRate());
         buffer.clear();
+        num_samples = 0;
     }
 
     if (recording and not button_on) {
@@ -75,7 +77,7 @@ void Recorder::step() {
         }
         while (file_exists(filename));
 
-        writewav(&buffer[0], Format::FLOAT_32, num_channels, buffer.size(), engineGetSampleRate(), filename.c_str());
+        writewav(&buffer[0], SampleFmt::FLOAT_32, num_channels, buffer.size(), engineGetSampleRate(), filename.c_str());
         printf("Wrote %s\n", filename.c_str());
     }
 
@@ -89,6 +91,7 @@ void Recorder::step() {
             buffer.push_back(inputs[Recorder::LEFT_INPUT].value / 12);
             buffer.push_back(inputs[Recorder::RIGHT_INPUT].value / 12);
         }
+        num_samples += 1;
     }
 
     recording = button_on;
@@ -161,8 +164,8 @@ RecorderWidget::RecorderWidget(Recorder *module) : ModuleWidget(module) {
 }
 
 void RecorderWidget::step() {
-    recordingTimer->setSeconds(recorder->getSeconds());
     recordingTimer->recording = recorder->recording;
+    recordingTimer->setSeconds(recorder->getSeconds());
 }
 
 Model *modelRecorder = Model::create<Recorder, RecorderWidget>("MicroTools", "Recorder", "Recorder", UTILITY_TAG);
