@@ -267,4 +267,4 @@ void RecorderWidget::step() {
     formatSelector->setDisplay(recorder->format);
 }
 
-Model *modelRecorder = Model::create<Recorder, RecorderWidget>("MicroTools", "Recorder", "Recorder", UTILITY_TAG);
+Model *modelRecorder = Model::create<Recorder, RecorderWidget>("MicroTools", "Recorder", "Recorder", RECORDING_TAG);
