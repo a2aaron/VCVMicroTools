@@ -7,25 +7,25 @@
 
 std::vector<uint8_t> to_bytes(SampleFmt format, std::vector<float> buffer) {
     std::vector<uint8_t> byte_buffer;
-    for (int i = 0; i < buffer.size(); i++) {
+    for (float x : buffer) {
         // Vector storing the sample unpacked into some number of bytes.
         std::vector<uint8_t> bytes;
 
         // Note: Audio output from Eurorack devices is +-12V
         if (format == SampleFmt::PCM_U8) {
             // Range will be from 0 to 255
-            uint8_t sample = 127 * ((buffer[i] / 24) + 1);
+            uint8_t sample = 127 * (x / 24 + 1);
             bytes.push_back(sample);
         } else if (format == SampleFmt::PCM_S16) {
             // Range will be from -32766 to 32767
-            int16_t sample = 32767 * (buffer[i] / 12);
+            int16_t sample = 32767 * (x / 12);
             // Pretend the 16bit integer is actually just two 8 bit bytes
             uint8_t const* casted = reinterpret_cast<uint8_t const *>(&sample);
             bytes.push_back(casted[0]);
             bytes.push_back(casted[1]);
         } else if (format == SampleFmt::FLOAT_32) {
             // Wav files are expecting floats between -1 and 1.
-            float sample = buffer[i] / 12;
+            float sample = x / 12;
             // Pretend the 32bit float is actually just four 8 bit bytes
             uint8_t const* casted = reinterpret_cast<uint8_t const *>(&sample);
             bytes.push_back(casted[0]);
@@ -139,18 +139,50 @@ struct RecordButton : SVGSwitch, ToggleSwitch {
     }
 };
 
-struct RecordingTimer : LedDisplay {
+struct FormatItem : MenuItem {
+    SampleFmt format;
+    Recorder *recorder;
+    FormatItem(SampleFmt format, Recorder *recorder) {
+        this->format = format;
+        this->text = toString(format);
+        this->recorder = recorder;
+        this->rightText = CHECKMARK(format == recorder->format);
+    }
+
+    // on click, set the Recorder to use the selected format.
+    void onAction(EventAction &e) override {
+        recorder->format = this->format;
+    }
+};
+
+struct RecordingDisplay : LedDisplay {
     char msg[8] = {0};
-    LedDisplayChoice *text = nullptr;
     bool recording = false;
 
-    RecordingTimer() {
-        box.size = Vec(35, 22);
-        text = Widget::create<LedDisplayChoice>(Vec(0, 0));
-        text->textOffset = Vec(3, 14);
-        text->box.size = Vec(35, 25);
+    LedDisplayChoice *timerText = nullptr;
+    LedDisplaySeparator *separator = nullptr;
+    LedDisplayChoice *formatChoice = nullptr;
+    Recorder *recorder;
+
+    RecordingDisplay() {
+        box.size = Vec(35, 44);
+        Vec pos = Vec(0, 0);
+        timerText = Widget::create<LedDisplayChoice>(pos);
+        timerText->textOffset = Vec(3, 14);
+        timerText->box.size = Vec(35, 22);
+        pos = timerText->box.getBottomLeft();
         setSeconds(0);
-        addChild(text);
+        addChild(timerText);
+
+        separator = Widget::create<LedDisplaySeparator>(pos);
+        separator->box.size.x = box.size.x;
+        addChild(separator);
+
+        formatChoice = Widget::create<LedDisplayChoice>(pos);
+        formatChoice->textOffset = Vec(3, 14);
+        formatChoice->box.size = Vec(35, 22);
+        pos = formatChoice->box.getBottomLeft();
+        addChild(formatChoice);
     }
 
     void setSeconds(float seconds) {
@@ -168,52 +200,23 @@ struct RecordingTimer : LedDisplay {
             sprintf(msg, "%02d %02d", a, b);
         }
 
-        text->text = msg;
-    }
-};
-
-struct FormatItem : MenuItem {
-    SampleFmt format;
-    Recorder *recorder;
-    FormatItem(SampleFmt format, Recorder *recorder) {
-        this->format = format;
-        this->text = toString(format);
-        this->recorder = recorder;
-        this->rightText = CHECKMARK(format == recorder->format);
-    }
-
-    // on click, set the Recorder to use the selected format.
-    void onAction(EventAction &e) override {
-        recorder->format = this->format;
-    }
-};
-
-
-struct FormatSelector : LedDisplay {
-    LedDisplayChoice *text = nullptr;
-    Recorder *recorder;
-    FormatSelector() {
-        box.size = Vec(35, 22);
-        text = Widget::create<LedDisplayChoice>(Vec(0, 0));
-        text->textOffset = Vec(3, 14);
-        text->box.size = Vec(35, 25);
-        addChild(text);
+        timerText->text = msg;
     }
 
     void setDisplay(SampleFmt format) {
         switch(format) {
-            case SampleFmt::PCM_U8:
-                text->text = "8 USI";
-                break;
-            case SampleFmt::PCM_S16:
-                text->text = "16 SI";
-                break;
-            case SampleFmt::FLOAT_32:
-                text->text = "32 FL";
-                break;
-            default:
-                text->text = "ERROR";
-                break;
+        case SampleFmt::PCM_U8:
+            formatChoice->text = "8 USI";
+            break;
+        case SampleFmt::PCM_S16:
+            formatChoice->text = "16 SI";
+            break;
+        case SampleFmt::FLOAT_32:
+            formatChoice->text = "32 FL";
+            break;
+        default:
+            formatChoice->text = "ERROR";
+            break;
         }
     }
 
@@ -232,8 +235,7 @@ struct FormatSelector : LedDisplay {
 
 struct RecorderWidget : ModuleWidget {
     Recorder *recorder;
-    RecordingTimer *recordingTimer;
-    FormatSelector *formatSelector;
+    RecordingDisplay *display;
     RecorderWidget(Recorder *module);
     void step() override;
 };
@@ -250,21 +252,18 @@ RecorderWidget::RecorderWidget(Recorder *module) : ModuleWidget(module) {
     addInput(Port::create<PJ301MPort>(Vec(10, 50), Port::INPUT, module, Recorder::LEFT_INPUT));
     addInput(Port::create<PJ301MPort>(Vec(10, 90), Port::INPUT, module, Recorder::RIGHT_INPUT));
 
-    recordingTimer = Widget::create<RecordingTimer>(Vec(5, 140));
-    addChild(recordingTimer);
+    display = Widget::create<RecordingDisplay>(Vec(5, 140));
+    display->recorder = module;
+    addChild(display);
 
-    formatSelector = Widget::create<FormatSelector>(Vec(5, 300));
-    formatSelector->recorder = module;
-    addChild(formatSelector);
-
-    addParam(ParamWidget::create<RecordButton>(Vec(7.5, 170), module, Recorder::RECORD_BUTTON, 0.0f, 1.0f, 0.0f));
+    addParam(ParamWidget::create<RecordButton>(Vec(7.5, 200), module, Recorder::RECORD_BUTTON, 0.0f, 1.0f, 0.0f));
     addParam(ParamWidget::create<CKSS>(Vec(15, 260), module, Recorder::MONO_STEREO, 0.0f, 1.0f, 0.0f));
 }
 
 void RecorderWidget::step() {
-    recordingTimer->recording = recorder->recording;
-    recordingTimer->setSeconds(recorder->getSeconds());
-    formatSelector->setDisplay(recorder->format);
+    display->recording = recorder->recording;
+    display->setSeconds(recorder->getSeconds());
+    display->setDisplay(recorder->format);
 }
 
 Model *modelRecorder = Model::create<Recorder, RecorderWidget>("MicroTools", "Recorder", "Recorder", RECORDING_TAG);
