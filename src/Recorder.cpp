@@ -8,35 +8,30 @@
 std::vector<uint8_t> to_bytes(SampleFmt format, std::vector<float> buffer) {
     std::vector<uint8_t> byte_buffer;
     for (float x : buffer) {
-        // Vector storing the sample unpacked into some number of bytes.
-        std::vector<uint8_t> bytes;
-
         // Note: Audio output from Eurorack devices is +-12V
         if (format == SampleFmt::PCM_U8) {
             // Range will be from 0 to 255
-            uint8_t sample = 127 * (x / 24 + 1);
-            bytes.push_back(sample);
+            uint8_t sample = 127 * (x / 12 + 1);
+            byte_buffer.push_back(sample);
         } else if (format == SampleFmt::PCM_S16) {
-            // Range will be from -32766 to 32767
-            int16_t sample = 32767 * (x / 12);
+            // Range will be from -32766 to 32766
+            int16_t sample = 32766 * (x / 12);
             // Pretend the 16bit integer is actually just two 8 bit bytes
             uint8_t const* casted = reinterpret_cast<uint8_t const *>(&sample);
-            bytes.push_back(casted[0]);
-            bytes.push_back(casted[1]);
+            byte_buffer.push_back(casted[0]);
+            byte_buffer.push_back(casted[1]);
         } else if (format == SampleFmt::FLOAT_32) {
             // Wav files are expecting floats between -1 and 1.
             float sample = x / 12;
             // Pretend the 32bit float is actually just four 8 bit bytes
             uint8_t const* casted = reinterpret_cast<uint8_t const *>(&sample);
-            bytes.push_back(casted[0]);
-            bytes.push_back(casted[1]);
-            bytes.push_back(casted[2]);
-            bytes.push_back(casted[3]);
+            byte_buffer.push_back(casted[0]);
+            byte_buffer.push_back(casted[1]);
+            byte_buffer.push_back(casted[2]);
+            byte_buffer.push_back(casted[3]);
         } else {
-            assert(not "Unknown format");
+            assert(not "an expected format");
         }
-        // Append the bytes vector to byte_buffer
-        byte_buffer.insert(byte_buffer.end(), bytes.begin(), bytes.end());
     }
     return byte_buffer;
 }
