@@ -236,8 +236,10 @@ struct RecordingDisplay : LedDisplay {
 struct RecorderWidget : ModuleWidget {
     Recorder *recorder;
     RecordingDisplay *display;
+    RecordButton *button;
     RecorderWidget(Recorder *module);
     void step() override;
+    void fromJson(json_t *rootJ) override;
 };
 
 RecorderWidget::RecorderWidget(Recorder *module) : ModuleWidget(module) {
@@ -255,9 +257,14 @@ RecorderWidget::RecorderWidget(Recorder *module) : ModuleWidget(module) {
     display = Widget::create<RecordingDisplay>(Vec(5, 140));
     display->recorder = module;
     addChild(display);
-
-    addParam(ParamWidget::create<RecordButton>(Vec(7.5, 200), module, Recorder::RECORD_BUTTON, 0.0f, 1.0f, 0.0f));
+    button = ParamWidget::create<RecordButton>(Vec(7.5, 200), module, Recorder::RECORD_BUTTON, 0.0f, 1.0f, 0.0f);
+    addParam(button);
     addParam(ParamWidget::create<CKSS>(Vec(15, 260), module, Recorder::MONO_STEREO, 0.0f, 1.0f, 0.0f));
+}
+
+void RecorderWidget::fromJson(json_t *rootJ) {
+    ModuleWidget::fromJson(rootJ);
+    button->setValue(0.0); // Make sure the Recorder isn't recording initially.
 }
 
 void RecorderWidget::step() {
