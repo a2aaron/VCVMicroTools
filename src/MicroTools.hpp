@@ -7,4 +7,4 @@ using namespace rack;
 extern Plugin *plugin;
 
 extern Model *modelPushButton;
-
+extern Model *modelNoiseGenerator;
