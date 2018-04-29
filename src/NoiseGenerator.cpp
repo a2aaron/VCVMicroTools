@@ -35,6 +35,10 @@ void NoiseGenerator::step() {
         clock_length *= 100;
     }
 
+    if (clock_length < 0) {
+        clock_length = 1;
+    }
+
     float volume = params[VOLUME_KNOB].value;
 
     // Every clock_length frames, set the current output to a new sample.
@@ -58,10 +62,12 @@ NoiseGeneratorWidget::NoiseGeneratorWidget(NoiseGenerator *module) : ModuleWidge
     addChild(Widget::create<ScrewSilver>(Vec(15, 0)));
     addChild(Widget::create<ScrewSilver>(Vec(15, 365)));
 
-    addOutput(Port::create<PJ301MPort>(Vec(10, 50), Port::OUTPUT, module, 0));
-    addParam(ParamWidget::create<RoundBlackKnob>(Vec(10, 100), module, NoiseGenerator::FREQUENCY_KNOB, 1.0f, 100.0f, 1.0f));
-    addParam(ParamWidget::create<RoundBlackKnob>(Vec(10, 150), module, NoiseGenerator::VOLUME_KNOB, 0.0f, 12.0f, 1.0f));
-    addParam(ParamWidget::create<CKSS>(Vec(15, 260), module, NoiseGenerator::FREQUENCY_MULTIPLIER, 0.0f, 1.0f, 0.0f));
+    addOutput(Port::create<PJ301MPort>(Vec(10, 260), Port::OUTPUT, module, 0));
+
+    addParam(ParamWidget::create<RoundBlackKnob>(Vec(8, 50), module, NoiseGenerator::VOLUME_KNOB, 0.0f, 12.0f, 1.0f));
+    
+    addParam(ParamWidget::create<RoundBlackKnob>(Vec(8, 100), module, NoiseGenerator::FREQUENCY_KNOB, 1.0f, 100.0f, 1.0f));
+    addParam(ParamWidget::create<CKSS>(Vec(15, 150), module, NoiseGenerator::FREQUENCY_MULTIPLIER, 0.0f, 1.0f, 0.0f));
 }
 
 Model *modelNoiseGenerator = Model::create<NoiseGenerator, NoiseGeneratorWidget>("MicroTools", "Noise Generator", "Noise Generator", NOISE_TAG);
