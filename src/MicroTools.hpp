@@ -8,3 +8,4 @@ extern Plugin *plugin;
 
 extern Model *modelPushButton;
 extern Model *modelNoiseGenerator;
+extern Model *modelRecorder;

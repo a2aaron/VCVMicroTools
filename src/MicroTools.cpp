@@ -10,4 +10,5 @@ void init(rack::Plugin *p) {
 	
 	p->addModel(modelPushButton);
     p->addModel(modelNoiseGenerator);
+    p->addModel(modelRecorder);
 }
