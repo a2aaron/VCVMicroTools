@@ -56,7 +56,7 @@ struct NoiseGeneratorWidget : ModuleWidget {
 };
 
 NoiseGeneratorWidget::NoiseGeneratorWidget(NoiseGenerator *module) : ModuleWidget(module) {
-    setPanel(SVG::load(assetPlugin(plugin, "res/Recorder.svg")));
+    setPanel(SVG::load(assetPlugin(plugin, "res/NoiseGenerator.svg")));
 
     // Mounting Screws
     addChild(Widget::create<ScrewSilver>(Vec(15, 0)));
