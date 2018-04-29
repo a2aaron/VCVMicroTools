@@ -3,7 +3,10 @@
 
 struct NoiseGenerator : Module {
     enum ParamIds {
-        NUM_PARAMS = 2,
+        FREQUENCY_KNOB = 0,
+        VOLUME_KNOB = 1,
+        FREQUENCY_MULTIPLIER = 2,
+        NUM_PARAMS = 3,
     };
 
     enum OutputIds {
@@ -20,18 +23,26 @@ struct NoiseGenerator : Module {
 
     NoiseGenerator() : Module(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {}
     void step() override;
-    int t = 0;
+    int timer = 0;
     float last_out = 0.0f;
 };
 
 void NoiseGenerator::step() {
-    int every = static_cast<int>(params[0].value);
-    float amp = params[1].value;
-    if (t % every == 0){
-        float r = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-        last_out = r * amp;
+    int clock_length = static_cast<int>(params[FREQUENCY_KNOB].value);
+    bool frequency_multiplier = params[FREQUENCY_MULTIPLIER].value;
+
+    if (frequency_multiplier) {
+        clock_length *= 100;
     }
-    t = (t + 1) % every;
+
+    float volume = params[VOLUME_KNOB].value;
+
+    // Every clock_length frames, set the current output to a new sample.
+    if (timer % clock_length == 0){
+        float sample = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+        last_out = sample * volume;
+    }
+    timer = (timer + 1) % clock_length;
 
     outputs[0].value = last_out;
 }
@@ -48,8 +59,9 @@ NoiseGeneratorWidget::NoiseGeneratorWidget(NoiseGenerator *module) : ModuleWidge
     addChild(Widget::create<ScrewSilver>(Vec(15, 365)));
 
     addOutput(Port::create<PJ301MPort>(Vec(10, 50), Port::OUTPUT, module, 0));
-    addParam(ParamWidget::create<RoundBlackKnob>(Vec(10, 100), module, 0, 1.0f, 10000.0f, 1.0f));
-    addParam(ParamWidget::create<RoundBlackKnob>(Vec(10, 150), module, 1, 0.0f, 12.0f, 1.0f));
+    addParam(ParamWidget::create<RoundBlackKnob>(Vec(10, 100), module, NoiseGenerator::FREQUENCY_KNOB, 1.0f, 100.0f, 1.0f));
+    addParam(ParamWidget::create<RoundBlackKnob>(Vec(10, 150), module, NoiseGenerator::VOLUME_KNOB, 0.0f, 12.0f, 1.0f));
+    addParam(ParamWidget::create<CKSS>(Vec(15, 260), module, NoiseGenerator::FREQUENCY_MULTIPLIER, 0.0f, 1.0f, 0.0f));
 }
 
 Model *modelNoiseGenerator = Model::create<NoiseGenerator, NoiseGeneratorWidget>("MicroTools", "Noise Generator", "Noise Generator", NOISE_TAG);
