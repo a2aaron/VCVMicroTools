@@ -41,8 +41,8 @@ void NoiseGenerator::step() {
     int clock_length = max(static_cast<int>(f_clock_length), 1);
 
     float volume = params[VOLUME_KNOB].value;
-    printf("%d\n", clock_length);
     // Every clock_length frames, set the current output to a new sample.
+    // TODO: don't use the set frame rate, actually do this via time.
     if (timer % clock_length == 0){
         float sample = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
         last_out = sample * volume;
@@ -60,15 +60,19 @@ NoiseGeneratorWidget::NoiseGeneratorWidget(NoiseGenerator *module) : ModuleWidge
     setPanel(SVG::load(assetPlugin(plugin, "res/NoiseGenerator.svg")));
 
     // Mounting Screws
-    addChild(Widget::create<ScrewSilver>(Vec(15, 0)));
-    addChild(Widget::create<ScrewSilver>(Vec(15, 365)));
+    addChild(Widget::create<ScrewSilver>(Vec(5, 0)));
+    addChild(Widget::create<ScrewSilver>(Vec(5, 365)));
+    addChild(Widget::create<ScrewSilver>(Vec(50, 0)));
+    addChild(Widget::create<ScrewSilver>(Vec(50, 365)));
 
     addOutput(Port::create<PJ301MPort>(Vec(10, 260), Port::OUTPUT, module, 0));
 
-    addParam(ParamWidget::create<RoundBlackKnob>(Vec(8, 50), module, NoiseGenerator::VOLUME_KNOB, 0.0f, 12.0f, 1.0f));
+    int x_pos = 20;
+    int y_offset = 5;
+    addParam(ParamWidget::create<RoundBlackKnob>(Vec(x_pos, 50 + y_offset), module, NoiseGenerator::VOLUME_KNOB, 0.0f, 12.0f, 1.0f));
     
-    addParam(ParamWidget::create<RoundBlackKnob>(Vec(8, 100), module, NoiseGenerator::PERIOD_KNOB, 0.0f, 10.0f, 0.0f));
-    addParam(ParamWidget::create<CKSS>(Vec(15, 150), module, NoiseGenerator::PERIOD_MULTIPLIER, 0.0f, 1.0f, 0.0f));
+    addParam(ParamWidget::create<RoundBlackKnob>(Vec(x_pos, 100 + y_offset), module, NoiseGenerator::PERIOD_KNOB, 0.0f, 10.0f, 0.0f));
+    addParam(ParamWidget::create<CKSS>(Vec(30, 150), module, NoiseGenerator::PERIOD_MULTIPLIER, 0.0f, 1.0f, 0.0f));
 }
 
 Model *modelNoiseGenerator = Model::create<NoiseGenerator, NoiseGeneratorWidget>("MicroTools", "Noise Generator", "Noise Generator", NOISE_TAG);
