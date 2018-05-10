@@ -95,7 +95,11 @@ void Recorder::step() {
     if (not recording and button_on) {
         printf("Recording %d channels %f, %s\n", num_channels, engineGetSampleRate(), toString(format));
         buffer.clear();
-        num_samples = 0;
+        // Push an initial empty sample to make sure the file doesn't start silent
+        // (otherwise, some programs interpret the WAV as corrupt or completly empty).
+        buffer.push_back(0.1);
+        buffer.push_back(0.1);
+        num_samples = num_channels == 1 ? 2 : 1;
     }
 
     if (recording and not button_on) {
