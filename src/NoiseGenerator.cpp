@@ -1,5 +1,23 @@
 #include "MicroTools.hpp"
 #include "dsp/digital.hpp"
+#include <map>
+#include <string>
+
+enum NoiseType {
+    WHITE_NOISE,
+    BROWNIAN,
+    PITCH,
+};
+
+const std::map<NoiseType, std::pair<char*, char*>> noiseToStr = {
+    {WHITE_NOISE, {"White Noise", "WHITE"}},
+    {BROWNIAN, {"Brownian Noise", "BROWN"}},
+    {PITCH, {"VCO/8va Pitches", "PITCH"}},
+};
+
+const char* toString(NoiseType format) {
+    return noiseToStr.at(format).first;
+}
 
 struct NoiseGenerator : Module {
     enum ParamIds {
@@ -27,6 +45,7 @@ struct NoiseGenerator : Module {
     void step() override;
     int timer = 0;
     float last_out = 0.0f;
+    NoiseType noiseType;
 };
 
 void NoiseGenerator::step() {
@@ -44,21 +63,87 @@ void NoiseGenerator::step() {
     // Every clock_length frames, set the current output to a new sample.
     // TODO: don't use the set frame rate, actually do this via time.
     if (timer % clock_length == 0){
-        float sample = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-        last_out = sample * volume;
+        switch (noiseType) {
+            case NoiseType::WHITE_NOISE:
+            {
+                float sample = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+                last_out = sample * volume;
+                break;
+            }
+            case NoiseType::BROWNIAN:
+            {
+                float sample = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+                sample = 2 * (sample - 0.5);
+                last_out += sample * volume / 10;
+
+                last_out = min(max(0.0f, last_out), volume);
+                break;
+            }
+        }
     }
     timer = (timer + 1) % clock_length;
 
     outputs[0].value = last_out;
 }
 
+struct ModeItem : MenuItem {
+    NoiseType noiseType;
+    NoiseType *noiseDest;
+    ModeItem(NoiseType noiseType, NoiseType *noiseDest) {
+        this->noiseType = noiseType;
+        this->text = noiseToStr.at(format).first;
+        this->noiseDest = noiseDest;
+        this->rightText = CHECKMARK(noiseType == *noiseDest);
+    }
+
+    // on click, set the NoiseGenerator to use the selected format.
+    void onAction(EventAction &e) override {
+        *noiseDest = this->noiseType;
+    }
+};
+
+struct NoiseTypeDisplay : LedDisplay {
+    char msg[8] = {0};
+
+    LedDisplayChoice *displayChoice = nullptr;
+    NoiseType *noiseDest; // Where the NoiseType value should get written to upon clicking a menu item
+
+    NoiseTypeDisplay() {
+        box.size = Vec(35, 22);
+        Vec pos = Vec(0, 0);
+        displayChoice = Widget::create<LedDisplayChoice>(pos);
+        displayChoice->textOffset = Vec(3, 14);
+        displayChoice->box.size = Vec(35, 22);
+        addChild(displayChoice);
+    }
+
+    void setDisplay(NoiseType noiseType) {
+        displayChoice->text = noiseToStr.at(noiseType).second;
+    }
+
+    void onMouseDown(EventMouseDown &e) override {
+        Menu *menu = gScene->createMenu();
+        menu->addChild(construct<MenuLabel>(&MenuLabel::text, "Noise Type"));
+        menu->addChild(new ModeItem(NoiseType::WHITE_NOISE, noiseDest));
+        menu->addChild(new ModeItem(NoiseType::BROWNIAN, noiseDest));
+        menu->addChild(new ModeItem(NoiseType::PITCH, noiseDest));
+    }
+};
+
 struct NoiseGeneratorWidget : ModuleWidget {
+    NoiseTypeDisplay *display;
+    NoiseGenerator *noiseGenerator;
     NoiseGeneratorWidget(NoiseGenerator *module);
+
+    void step() override {
+        ModuleWidget::step();
+        display->setDisplay(noiseGenerator->noiseType);
+    }
 };
 
 NoiseGeneratorWidget::NoiseGeneratorWidget(NoiseGenerator *module) : ModuleWidget(module) {
     setPanel(SVG::load(assetPlugin(plugin, "res/NoiseGenerator.svg")));
-
+    noiseGenerator = module;
     // Mounting Screws
     addChild(Widget::create<ScrewSilver>(Vec(5, 0)));
     addChild(Widget::create<ScrewSilver>(Vec(5, 365)));
@@ -78,6 +163,10 @@ NoiseGeneratorWidget::NoiseGeneratorWidget(NoiseGenerator *module) : ModuleWidge
 
     addParam(ParamWidget::create<CKSS>(Vec(30, 150), module, NoiseGenerator::PERIOD_MULTIPLIER, 0.0f, 1.0f, 0.0f));
     addInput(Port::create<PJ301MPort>(Vec(cv_x, period_y), Port::INPUT, module, NoiseGenerator::PERIOD_CV));
+
+    display = Widget::create<NoiseTypeDisplay>(Vec(5, 260));
+    display->noiseDest = &module->noiseType;
+    addChild(display);
 }
 
 Model *modelNoiseGenerator = Model::create<NoiseGenerator, NoiseGeneratorWidget>("MicroTools", "Noise Generator", "Noise Generator", NOISE_TAG);
