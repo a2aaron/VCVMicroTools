@@ -9,14 +9,14 @@ enum NoiseType {
     PITCH,
 };
 
-const std::map<NoiseType, std::pair<char*, char*>> noiseToStr = {
+const std::map<NoiseType, std::pair<const char*, const char*>> noiseToStr = {
     {WHITE_NOISE, {"White Noise", "WHITE"}},
     {BROWNIAN, {"Brownian Noise", "BROWN"}},
     {PITCH, {"VCO/8va Pitches", "PITCH"}},
 };
 
-const char* toString(NoiseType format) {
-    return noiseToStr.at(format).first;
+const std::pair<const char*, const char*> toString(NoiseType format) {
+    return noiseToStr.at(format);
 }
 
 struct NoiseGenerator : Module {
@@ -45,11 +45,23 @@ struct NoiseGenerator : Module {
     void step() override;
     int timer = 0;
     float last_out = 0.0f;
-    NoiseType noiseType;
+    NoiseType noiseType = NoiseType::WHITE_NOISE;
+
+    json_t* toJson() override {
+        json_t* rootJ = json_object();
+        json_t* jsonNoiseType = json_integer(noiseType);
+        json_object_set_new(rootJ, "noiseType", jsonNoiseType);
+        return rootJ;
+    }
+
+    void fromJson(json_t *rootJ) override {
+        printf("fromJson\n");
+        json_t *noiseJ = json_object_get(rootJ, "noiseType");
+        noiseType = static_cast<NoiseType>(json_integer_value(noiseJ));
+    }
 };
 
 void NoiseGenerator::step() {
-
     // The knob and CV inputs are from 0V to 10V. (note that negative CV inputs will still work)
     // We then multiply the knob and CV inputs by 10V to obtain a nicer distribution of values.
     // This way, clock length can range from 1 to 1000 instead of just 1 to 10.
@@ -79,6 +91,10 @@ void NoiseGenerator::step() {
                 last_out = min(max(0.0f, last_out), volume);
                 break;
             }
+            default:
+            {
+                // printf("unsupported format %u\n", noiseType);
+            }
         }
     }
     timer = (timer + 1) % clock_length;
@@ -91,7 +107,7 @@ struct ModeItem : MenuItem {
     NoiseType *noiseDest;
     ModeItem(NoiseType noiseType, NoiseType *noiseDest) {
         this->noiseType = noiseType;
-        this->text = noiseToStr.at(format).first;
+        this->text = toString(noiseType).first;
         this->noiseDest = noiseDest;
         this->rightText = CHECKMARK(noiseType == *noiseDest);
     }
@@ -118,7 +134,7 @@ struct NoiseTypeDisplay : LedDisplay {
     }
 
     void setDisplay(NoiseType noiseType) {
-        displayChoice->text = noiseToStr.at(noiseType).second;
+        displayChoice->text = toString(noiseType).second;
     }
 
     void onMouseDown(EventMouseDown &e) override {
