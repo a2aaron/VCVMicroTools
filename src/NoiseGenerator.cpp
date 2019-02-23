@@ -169,23 +169,24 @@ NoiseGeneratorWidget::NoiseGeneratorWidget(NoiseGenerator *module) : ModuleWidge
     addChild(Widget::create<ScrewSilver>(Vec(70, 0)));
     addChild(Widget::create<ScrewSilver>(Vec(50, 365)));
 
-    addOutput(Port::create<PJ301MPort>(Vec(50, 260), Port::OUTPUT, module, 0));
-
-    int knob_x = 15;
-    int volume_y = 55;
-    int period_y = 105;
-    int cv_x = 58;
-    addParam(ParamWidget::create<RoundBlackKnob>(Vec(knob_x, volume_y), module, NoiseGenerator::VOLUME_KNOB, 0.0f, 12.0f, 1.0f));
-    addInput(Port::create<PJ301MPort>(Vec(cv_x, volume_y), Port::INPUT, module, NoiseGenerator::VOLUME_CV));
-
-    addParam(ParamWidget::create<RoundBlackKnob>(Vec(knob_x, period_y), module, NoiseGenerator::PERIOD_KNOB, 0.0f, 10.0f, 0.0f));
-
+    const int KNOB_X = 15;
+    const int VOLUME_Y = 55;
+    const int PERIOD_Y = 105;
+    const int CV_X = 58;
+    // Volume
+    addParam(ParamWidget::create<RoundBlackKnob>(Vec(KNOB_X, VOLUME_Y), module, NoiseGenerator::VOLUME_KNOB, 0.0f, 12.0f, 1.0f));
+    addInput(Port::create<PJ301MPort>(Vec(CV_X, VOLUME_Y), Port::INPUT, module, NoiseGenerator::VOLUME_CV));
+    // Period
+    addParam(ParamWidget::create<RoundBlackKnob>(Vec(KNOB_X, PERIOD_Y), module, NoiseGenerator::PERIOD_KNOB, 0.0f, 10.0f, 0.0f));
+    addInput(Port::create<PJ301MPort>(Vec(CV_X, PERIOD_Y), Port::INPUT, module, NoiseGenerator::PERIOD_CV));
     addParam(ParamWidget::create<CKSS>(Vec(30, 150), module, NoiseGenerator::PERIOD_MULTIPLIER, 0.0f, 1.0f, 0.0f));
-    addInput(Port::create<PJ301MPort>(Vec(cv_x, period_y), Port::INPUT, module, NoiseGenerator::PERIOD_CV));
-
+    // Noise Type Display
     display = Widget::create<NoiseTypeDisplay>(Vec(5, 260));
     display->noiseDest = &module->noiseType;
     addChild(display);
+
+    //Output
+    addOutput(Port::create<PJ301MPort>(Vec(50, 260), Port::OUTPUT, module, 0));
 }
 
 Model *modelNoiseGenerator = Model::create<NoiseGenerator, NoiseGeneratorWidget>("MicroTools", "Noise Generator", "Noise Generator", NOISE_TAG);
