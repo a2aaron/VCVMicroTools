@@ -6,13 +6,14 @@
 #include <cstdint>
 
 enum SampleFmt {
-    PCM_U8,
-    PCM_S16,
-    FLOAT_32,
+  PCM_U8,
+  PCM_S16,
+  FLOAT_32,
 };
 
-const char* toString(SampleFmt format);
+const char *toString(SampleFmt format);
 
-void writewav(uint8_t *data, SampleFmt format, int num_channels, int samples, int sample_rate, const char* filename);
+void writewav(uint8_t *data, SampleFmt format, int num_channels, int samples,
+              int sample_rate, const char *filename);
 
 #endif
