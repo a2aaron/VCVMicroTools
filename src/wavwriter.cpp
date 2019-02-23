@@ -40,8 +40,11 @@ const char* toString(SampleFmt format) {
     }
 }
 
-void writewav(uint8_t *data, SampleFmt format, int num_channels, int samples, int sample_rate, const char* filename) {
-  FILE* f = fopen(filename, "w");
+void writewav(uint8_t *data, SampleFmt format, int num_channels, int samples,
+              int sample_rate, const char *filename) {
+  // Note: This is "write bytes" as to avoid Windows from sticking `0d = \r`
+  // before every `0a = \n` (CLRF vs LF line ending nonsense).
+  FILE *f = fopen(filename, "wb");
 
   int sample_bytes, wav_format;
   switch (format) {
