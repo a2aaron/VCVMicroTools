@@ -6,13 +6,13 @@
 enum NoiseType {
     WHITE_NOISE,
     BROWNIAN,
-    PITCH,
+    TRIGGER,
 };
 
 const std::map<NoiseType, std::pair<const char*, const char*>> noiseToStr = {
     {WHITE_NOISE, {"White Noise", "WHITE"}},
     {BROWNIAN, {"Brownian Noise", "BROWN"}},
-    {PITCH, {"VCO/8va Pitches", "PITCH"}},
+    {TRIGGER, {"Random Trigger", "TRIGG"}},
 };
 
 const std::pair<const char*, const char*> toString(NoiseType format) {
@@ -67,7 +67,7 @@ void NoiseGenerator::step() {
     // This way, clock length can range from 1 to 1000 instead of just 1 to 10.
     // PERIOD_MULTIPLIER will increase the range from 1 to 100,000
     float f_clock_length = (params[PERIOD_KNOB].value + inputs[PERIOD_CV].value) * 10.0f;
-    f_clock_length *= params[PERIOD_MULTIPLIER].value ? 1000.0f : 1.0f;
+    f_clock_length *= params[PERIOD_MULTIPLIER].value ? 100.0f : 1.0f;
     
     int clock_length = max(static_cast<int>(f_clock_length), 1);
 
@@ -91,11 +91,14 @@ void NoiseGenerator::step() {
                 last_out = min(max(0.0f, last_out), volume);
                 break;
             }
-            default:
+            case NoiseType::TRIGGER:
             {
-                // printf("unsupported format %u\n", noiseType);
+                float sample = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+                last_out = sample > volume/10.0f ? 1.0f : 0.0f;
+                break;
             }
         }
+        // printf("%s\n", toString(noiseType).first);
     }
     timer = (timer + 1) % clock_length;
 
@@ -142,7 +145,7 @@ struct NoiseTypeDisplay : LedDisplay {
         menu->addChild(construct<MenuLabel>(&MenuLabel::text, "Noise Type"));
         menu->addChild(new ModeItem(NoiseType::WHITE_NOISE, noiseDest));
         menu->addChild(new ModeItem(NoiseType::BROWNIAN, noiseDest));
-        menu->addChild(new ModeItem(NoiseType::PITCH, noiseDest));
+        menu->addChild(new ModeItem(NoiseType::TRIGGER, noiseDest));
     }
 };
 
