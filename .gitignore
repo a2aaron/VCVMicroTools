@@ -1,3 +1,5 @@
 /build
 /dep
 plugin.dylib
+/.vscode
+plugin.dll
